@@ -21,12 +21,12 @@
  */
 
 add_action('init', function () {
-    add_rewrite_endpoint('sample-link-rotator', EP_PERMALINK);
+    foreach (sejoli_link_rotator_get_master_links() as $master_link) add_rewrite_endpoint($master_link, EP_PERMALINK);
 });
 
 add_action('template_redirect', function () {
     global $wp_query;
-    if ($wp_query->query_vars['name'] == 'sample-link-rotator') {
+    if (in_array($wp_query->query_vars['name'], sejoli_link_rotator_get_master_links())) {
         echo 'test new page';
         exit;
     }
@@ -95,3 +95,17 @@ add_action('admin_menu', function () {
 <?php
     }, '');
 });
+
+function sejoli_link_rotator_get_master_links()
+{
+    $siteurl = get_option('siteurl');
+    $siteurl .= '/';
+    $master_links = get_option('sejoli-link-rotator-master-link');
+    $master_links = explode("\n", $master_links);
+    $master_links = array_map(function ($master_link) use ($siteurl) {
+        $master_link = trim($master_link);
+        $master_link = str_replace($siteurl, '', $master_link);
+        return $master_link;
+    }, $master_links);
+    return $master_links;
+}
