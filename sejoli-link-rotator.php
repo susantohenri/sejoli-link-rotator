@@ -27,8 +27,23 @@ add_action('init', function () {
 add_action('template_redirect', function () {
     global $wp_query;
     if (in_array($wp_query->query_vars['name'], sejoli_link_rotator_get_master_links())) {
-        echo 'test new page';
-        exit;
+        $user_id = [];
+        global $wpdb;
+        $harga_klik = get_option('sejoli-link-rotator-harga-klik');
+        $product_id = get_option('sejoli-link-rotator-product-id');
+        $siteurl = get_option('siteurl');
+        $user_id = $wpdb->get_var($wpdb->prepare("
+            SELECT
+                user.`ID`
+            FROM {$wpdb->prefix}users user
+            LEFT JOIN {$wpdb->prefix}sejolisa_wallet wallet ON user.`ID` = wallet.user_id
+            GROUP BY user.`ID`
+            HAVING SUM(CASE WHEN type = 'in' THEN value ELSE -value END) >= %d
+            ORDER BY RAND()
+            LIMIT 1
+        ", $harga_klik));
+        sejoli_use_wallet($harga_klik, $user_id, 1);
+        wp_redirect("{$siteurl}/aff/{$user_id}/{$product_id}");
     }
 });
 
